@@ -2,8 +2,6 @@ import abc
 
 from . import commands, constants
 from .positionals import Direction, Position
-from .common import read_input
-
 
 class Entity(abc.ABC):
     """
@@ -21,19 +19,13 @@ class Entity(abc.ABC):
         :param player_id: The player id for the player who owns this entity
         :return: An instance of Entity along with its id
         """
-        ship_id, x_position, y_position = map(int, read_input().split())
+        ship_id, x_position, y_position = map(int, input().split())
         return ship_id, Entity(player_id, ship_id, Position(x_position, y_position))
 
     def __repr__(self):
         return "{}(id={}, {})".format(self.__class__.__name__,
                                       self.id,
                                       self.position)
-
-    def __hash__(self):
-        return hash((self.owner, self.id))
-
-    def __eq__(self, other):
-        return self.owner == other.owner and self.id == other.id
 
 
 class Dropoff(Entity):
@@ -56,8 +48,6 @@ class Ship(Entity):
     """
     Ship class to house ship entities
     """
-    __ships = {}
-
     def __init__(self, owner, id, position, halite_amount):
         super().__init__(owner, id, position)
         self.halite_amount = halite_amount
@@ -77,7 +67,7 @@ class Ship(Entity):
         checking for collisions.
         """
         raw_direction = direction
-        if not isinstance(direction, str) or direction not in "nsewo":
+        if not isinstance(direction, str) or direction not in "nsew":
             raw_direction = Direction.convert(direction)
         return "{} {} {}".format(commands.MOVE, self.id, raw_direction)
 
@@ -91,25 +81,11 @@ class Ship(Entity):
     def _generate(player_id):
         """
         Creates an instance of a ship for a given player given the engine's input.
-        If an instance with the same ship.id has previously been generated, that instance will be returned.
         :param player_id: The id of the player who owns this ship
         :return: The ship id and ship object
         """
-        # Read game engine input
-        ship_id, x_position, y_position, halite = map(int, read_input().split())
-
-        # Check storage to see if ship already exists
-        # If the ship exists, update its position and halite
-        if ship_id in Ship.__ships.keys():    
-            old_ship = Ship.__ships[ship_id]
-            old_ship.position = Position(x_position, y_position)
-            old_ship.halite_amount = halite
-            return ship_id, old_ship
-        else:
-            # Otherwise, create and return a new instance
-            new_ship = Ship(player_id, ship_id, Position(x_position, y_position), halite)
-            Ship.__ships[ship_id] = new_ship
-            return ship_id, new_ship
+        ship_id, x_position, y_position, halite = map(int, input().split())
+        return ship_id, Ship(player_id, ship_id, Position(x_position, y_position), halite)
 
     def __repr__(self):
         return "{}(id={}, {}, cargo={} halite)".format(self.__class__.__name__,

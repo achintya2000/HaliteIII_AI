@@ -2,9 +2,80 @@ import queue
 
 from . import constants
 from .entity import Entity, Shipyard, Ship, Dropoff
-from .player import Player
 from .positionals import Direction, Position
-from .common import read_input
+
+class Player:
+    """
+    Player object containing all items/metadata pertinent to the player.
+    """
+    def __init__(self, player_id, shipyard, halite=0):
+        self.id = player_id
+        self.shipyard = shipyard
+        self.halite_amount = halite
+        self._ships = {}
+        self._dropoffs = {}
+
+    def get_ship(self, ship_id):
+        """
+        Returns a singular ship mapped by the ship id
+        :param ship_id: The ship id of the ship you wish to return
+        :return: the ship object.
+        """
+        return self._ships[ship_id]
+
+    def get_ships(self):
+        """
+        :return: Returns all ship objects in a list
+        """
+        return self._ships.values()
+
+    def get_dropoff(self, dropoff_id):
+        """
+        Returns a singular dropoff mapped by its id
+        :param dropoff_id: The dropoff id to return
+        :return: The dropoff object
+        """
+        return self._dropoffs[dropoff_id]
+
+    def get_dropoffs(self):
+        """
+        :return: Returns all dropoff objects in a list
+        """
+        return self._dropoffs.values()
+
+    def has_ship(self, ship_id):
+        """
+        Check whether the player has a ship with a given ID.
+
+        Useful if you track ships via IDs elsewhere and want to make
+        sure the ship still exists.
+
+        :param ship_id: The ID to check.
+        :return: True if and only if the ship exists.
+        """
+        return ship_id in self._ships
+
+
+    @staticmethod
+    def _generate():
+        """
+        Creates a player object from the input given by the game engine
+        :return: The player object
+        """
+        player, shipyard_x, shipyard_y = map(int, input().split())
+        return Player(player, Shipyard(player, -1, Position(shipyard_x, shipyard_y)))
+
+    def _update(self, num_ships, num_dropoffs, halite):
+        """
+        Updates this player object considering the input from the game engine for the current specific turn.
+        :param num_ships: The number of ships this player has this turn
+        :param num_dropoffs: The number of dropoffs this player has this turn
+        :param halite: How much halite the player has in total
+        :return: nothing.
+        """
+        self.halite_amount = halite
+        self._ships = {id: ship for (id, ship) in [Ship._generate(self.id) for _ in range(num_ships)]}
+        self._dropoffs = {id: dropoff for (id, dropoff) in [Dropoff._generate(self.id) for _ in range(num_dropoffs)]}
 
 
 class MapCell:
@@ -94,8 +165,6 @@ class GameMap:
         :param target: The target to where calculate
         :return: The distance between these items
         """
-        source = self.normalize(source)
-        target = self.normalize(target)
         resulting_position = abs(source - target)
         return min(resulting_position.x, self.width - resulting_position.x) + \
             min(resulting_position.y, self.height - resulting_position.y)
@@ -132,10 +201,8 @@ class GameMap:
         :param destination: The destination towards which you wish to move your object.
         :return: A list of valid (closest) Directions towards your target.
         """
-        source = self.normalize(source)
-        destination = self.normalize(destination)
         possible_moves = []
-        distance = Position(abs(destination.x-source.x), abs(destination.y-source.y))
+        distance = abs(destination - source)
         y_cardinality, x_cardinality = self._get_target_direction(source, destination)
 
         if distance.x != 0:
@@ -154,8 +221,6 @@ class GameMap:
         :param destination: Ending position
         :return: A direction.
         """
-        # No need to normalize destination, since get_unsafe_moves
-        # does that
         for direction in self.get_unsafe_moves(ship.position, destination):
             target_pos = ship.position.directional_offset(direction)
             if not self[target_pos].is_occupied:
@@ -170,13 +235,12 @@ class GameMap:
         Creates a map object from the input given by the game engine
         :return: The map object
         """
-        map_width, map_height = map(int, read_input().split())
+        map_width, map_height = map(int, input().split())
         game_map = [[None for _ in range(map_width)] for _ in range(map_height)]
         for y_position in range(map_height):
-            cells = read_input().split()
+            cells = input().split()
             for x_position in range(map_width):
-                game_map[y_position][x_position] = MapCell(Position(x_position, y_position,
-                                                                    normalize=False),
+                game_map[y_position][x_position] = MapCell(Position(x_position, y_position),
                                                            int(cells[x_position]))
         return GameMap(game_map, map_width, map_height)
 
@@ -191,6 +255,6 @@ class GameMap:
             for x in range(self.width):
                 self[Position(x, y)].ship = None
 
-        for _ in range(int(read_input())):
-            cell_x, cell_y, cell_energy = map(int, read_input().split())
+        for _ in range(int(input())):
+            cell_x, cell_y, cell_energy = map(int, input().split())
             self[Position(cell_x, cell_y)].halite_amount = cell_energy

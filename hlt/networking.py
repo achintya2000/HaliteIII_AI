@@ -2,10 +2,8 @@ import json
 import logging
 import sys
 
-from .common import read_input
 from . import constants
 from .game_map import GameMap, Player
-
 
 class Game:
     """
@@ -19,10 +17,10 @@ class Game:
         self.turn_number = 0
 
         # Grab constants JSON
-        raw_constants = read_input()
+        raw_constants = input()
         constants.load_constants(json.loads(raw_constants))
 
-        num_players, self.my_id = map(int, read_input().split())
+        num_players, self.my_id = map(int, input().split())
 
         logging.basicConfig(
             filename="bot-{}.log".format(self.my_id),
@@ -36,8 +34,6 @@ class Game:
         self.me = self.players[self.my_id]
         self.game_map = GameMap._generate()
 
-        constants.set_dimensions(self.game_map.width, self.game_map.height)
-
     def ready(self, name):
         """
         Indicate that your bot is ready to play.
@@ -50,11 +46,11 @@ class Game:
         Updates the game object's state.
         :returns: nothing.
         """
-        self.turn_number = int(read_input())
+        self.turn_number = int(input())
         logging.info("=============== TURN {:03} ================".format(self.turn_number))
 
         for _ in range(len(self.players)):
-            player, num_ships, num_dropoffs, halite = map(int, read_input().split())
+            player, num_ships, num_dropoffs, halite = map(int, input().split())
             self.players[player]._update(num_ships, num_dropoffs, halite)
 
         self.game_map._update()
