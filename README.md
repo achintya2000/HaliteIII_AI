@@ -1,2 +1,5 @@
 ## Halite III - Duke University 
-(Andy Zhang, Achintya Kumar, Kamran Kara-Pabani, Thomas Chemmanoor)
+# Authors
+1. Andy Zhang
+2. Thomas Chemmanoor
+3. Achintya Kumar
